@@ -1,7 +1,7 @@
 import os
 
 
-data_dir = 'sorted_photo_v2_corrected_with_mirrored_images'
+data_dir = os.path.abspath('sorted_photo_v2_corrected_with_mirrored_images')
 result_file = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), 'annotation.txt')
 
