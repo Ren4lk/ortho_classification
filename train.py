@@ -39,14 +39,11 @@ def printAccuracyInFile(file_name, accuracy, epoch, total_epochs):
 
 
 if __name__ == '__main__':
-    ds = dataset.OrthoClassificationDataset(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'annotation.txt'),
-                                            transform=transforms.ImageTransforms())
+    train_dataset = dataset.OrthoClassificationDataset(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'annotation_train.txt'),
+                                                       transform=transforms.ImageTransforms())
 
-    len_valid_set = int(0.1 * len(ds))
-    len_train_set = len(ds) - len_valid_set
-
-    train_dataset, valid_dataset,  = torch.utils.data.random_split(ds,
-                                                                   [len_train_set, len_valid_set])
+    valid_dataset = dataset.OrthoClassificationDataset(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'annotation_valid.txt'),
+                                                       transform=transforms.ImageTransforms())
 
     print("The length of Train set is {}".format(len(train_dataset)))
     print("The length of Valid set is {}".format(len(valid_dataset)))
@@ -62,7 +59,7 @@ if __name__ == '__main__':
                               num_workers=4)
 
     torch.autograd.set_detect_anomaly(True)
-    network = oc_model.Network(num_classes=len(ds.classes)).cuda()
+    network = oc_model.Network(num_classes=len(train_dataset.classes)).cuda()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(network.parameters(), lr=0.0001)
     loss_min = np.inf

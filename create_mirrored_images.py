@@ -37,5 +37,5 @@ def createMirroredImages(data_dir):
 
 
 if __name__ == '__main__':
-    createMirroredImages(
-        'ortho_classification/sorted_photo_v2_corrected_with_mirrored_images')
+    createMirroredImages('/home/renat/repos/train_sorted_photo_v2_corrected_with_mirrored_images')
+    createMirroredImages('/home/renat/repos/valid_sorted_photo_v2_corrected_with_mirrored_images')
