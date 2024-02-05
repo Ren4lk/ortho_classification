@@ -20,9 +20,9 @@ class ImageTransforms():
         return image
 
     def color_jitter(self, image):
-        color_jitter = transforms.ColorJitter(brightness=0.3,
-                                              contrast=0.3,
-                                              saturation=0.3,
+        color_jitter = transforms.ColorJitter(brightness=0.25,
+                                              contrast=0.25,
+                                              saturation=0.25,
                                               hue=0.1)
         image = color_jitter(image)
         return image
@@ -34,5 +34,6 @@ class ImageTransforms():
         image = self.rotate(image, angle=100)
 
         image = TF.to_tensor(image)
-        image = TF.normalize(image, [0.5], [0.5])
+        image = TF.normalize(image, mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
         return image

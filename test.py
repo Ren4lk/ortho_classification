@@ -5,52 +5,46 @@ import os
 import matplotlib.pyplot as plt
 from PIL import Image
 import torch
+import torch.nn.functional as F
 import torchvision.transforms.functional as TF
-import ortho_classification.oc_model as oc_model
-import random
+from ortho_classification_model import OCModel
 
-weights_path = 'ortho_classification/face_classification_weights.pth'
-path = 'ortho_classification/some_photo'
 
-classes = ['jaw-lower',
-           'jaw-upper',
-           'mouth-sagittal_fissure',
-           'mouth-vestibule-front-closed',
-           'mouth-vestibule-front-half_open',
-           'mouth-vestibule-half_profile-closed-left',
-           'mouth-vestibule-half_profile-closed-right',
-           'mouth-vestibule-profile-closed-left',
-           'mouth-vestibule-profile-closed-right',
-           'portrait']
+def test(model, img_path, classes):
+    idx_to_class = {i: cls_name for i, cls_name in enumerate(classes)}
+    display_img = cv2.imread(img_path)
+    img = Image.fromarray(display_img)
 
-class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-idx_to_class = {i: cls_name for i, cls_name in enumerate(classes)}
-
-best_network = oc_model.Network(num_classes=len(classes)).cuda()
-best_network.load_state_dict(torch.load(
-    weights_path, map_location=torch.device('cuda')))
-best_network.eval()
-
-images_path = []
-for root, dirs, files in os.walk(path):
-    for filename in files:
-        images_path.append(os.path.join(path, filename))
-
-for img_path in images_path:
-    original_image = cv2.imread(img_path)
-    grayscale_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
-    display_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
-
-    temp_image = grayscale_image
-    temp_image = TF.resize(Image.fromarray(temp_image), size=(300, 300))
-    temp_image = TF.to_tensor(temp_image)
-    temp_image = TF.normalize(temp_image, [0.5], [0.5])
+    img = TF.resize(img, size=(300, 300))
+    img = TF.to_tensor(img)
+    img = TF.normalize(img, mean=[0.485, 0.456, 0.406],
+                       std=[0.229, 0.224, 0.225])
     with torch.no_grad():
-        target = best_network(temp_image.unsqueeze(0).cuda())
-    target = torch.argmax(torch.softmax(target, dim=1), dim=1)
+        predicted_target = model(img.unsqueeze(0).to(device))
 
-    plt.figure(figsize=(13, 13))
-    plt.imshow(display_image)
-    print('predicted:\t', idx_to_class[target.item()], '\nreal:\t', img_path[img_path.rfind('/')+1:img_path.rfind('I')-1], '\n')
-    # plt.xlabel(idx_to_class[target.item()])
-    plt.show()
+        predicted_prob = F.softmax(predicted_target, dim=1)
+        _, predicted_idx = torch.max(predicted_prob, dim=1)
+
+    print(
+        f'predicted: {idx_to_class[predicted_idx.item()]},  path: {img_path}')
+    # cv2.imshow('test', display_img)
+    # cv2.waitKey(0)
+
+
+if __name__ == '__main__':
+    classes = ['mouth-vestibule-front-half_open',
+               'mouth-vestibule-half_profile-closed-left',
+               'mouth-vestibule-half_profile-closed-right',
+               'mouth-vestibule-profile-closed-left']
+
+    device = ("cuda" if torch.cuda.is_available() else "cpu")
+    weights_path = r'D:\repos\ortho_classification\resnet18_ortho_classification_weights_epoch_1.pth'
+
+    model = OCModel(num_classes=len(classes)).to(device)
+    model.load_state_dict(torch.load(
+        weights_path, map_location=torch.device(device)))
+    model.eval()
+
+    test(model=model,
+         img_path=r'D:\repos\sorted_new_2023_10_24_test\mouth-vestibule-half_profile-closed-left\IMG_0263.JPG',
+         classes=classes)
